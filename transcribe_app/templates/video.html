@@ -1,0 +1,87 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+    <div class="video-box">
+        <form method="post" action="{% url 'video' %}">
+            {% csrf_token %}
+            <div class="new-inputbox inputbox">
+                <ion-icon name="videocam-outline"></ion-icon>
+                <input type="text" name="video_url">
+                <label for="video_url">Новое url:</label>
+            </div>
+        </form>
+{#        <h2>{{ video_title }}</h2>#}
+        <div id="{{ video_id }}"></div>
+{#        <p>{{ channel_title }}</p>#}
+    </div>
+    <div class="form-box">
+        <form method="POST" action="">
+        {% csrf_token %}
+            <div class="inputbox">
+                <ion-icon name="search-outline"></ion-icon>
+                <input type="text" name="words_filter" id="filter" title="Введите часть слова">
+                <label for="words_filter">Фильтр слов:</label>
+            </div>
+        </form>
+        <div class="timecodes">
+        {% for timecode, tuple in transcriptions.items %}
+            <div>
+                <button class="timecode-button" type="button" onclick="player.seekTo({{ tuple.1 }})">
+                    <strong>{{ timecode }}</strong> {{ tuple.0 }}
+                </button>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script>
+      const tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      let player;
+
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('{{ video_id }}', {
+          height: '720',
+          width: '1280',
+          videoId: '{{ video_id }}',
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+          }
+        });
+      }
+
+      function onPlayerReady(event) {
+        event.target.loadVideo();
+      }
+
+      function onPlayerStateChange(event) {
+           if (event.data === YT.PlayerState.STOP){
+             player.stopVideo()
+           }
+      }
+
+      const filterInput = document.querySelector('#filter');
+        const buttons = document.querySelectorAll('.timecode-button');
+
+        filterInput.addEventListener('input', () => {
+          const query = filterInput.value.toLowerCase().trim();
+          buttons.forEach((button) => {
+            const buttonText = button.textContent.toLowerCase();
+            if (buttonText.includes(query)) {
+              button.style.display = 'block';
+            } else {
+              button.style.display = 'none';
+            }
+          });
+        });
+    </script>
+
+{% endblock %}
