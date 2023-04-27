@@ -1,24 +1,24 @@
 from django.core.handlers.wsgi import WSGIRequest
 from django.shortcuts import render
-from transcribe_app.service.parsers.youtube_transcriber import YouTubeTranscriber, BadUrlError
+from transcribe_app.service.parsers.youtube_transcriber import YouTubeTranscriber
+from pytube import Playlist as YouTubePlaylist
 
 
 def main(request: WSGIRequest):
     return render(request, 'main.html')
 
 
-def video(request: WSGIRequest):
+def single_video(request: WSGIRequest):
     if request.method == 'POST':
         video_url = request.POST.get('video_url')
-        try:
-            transcript_obj = YouTubeTranscriber(video_url)
-        except BadUrlError as ex:
+        transcript_obj = YouTubeTranscriber(video_url)
+        if transcript_obj.errors_list:
             return render(request, 'main.html', {
-                'errors': ex.message,
+                'errors': transcript_obj.errors_list,
             })
         transcriptions = transcript_obj.transcript_dict
         video_id = transcript_obj.video_id
-        video_title = transcript_obj.video_title.decode('utf-8')
+        video_title = transcript_obj.video_title
         channel_title = transcript_obj.channel_title
         channel_url = transcript_obj.channel_url
         return render(request, 'video.html', {
@@ -32,21 +32,28 @@ def video(request: WSGIRequest):
 
 def channel(request: WSGIRequest):
     if request.method == 'POST':
-        channel_url = request.POST.get('channel_url')
-        ...
-        video_url_1 = 'https://www.youtube.com/watch?v=AtZROpdj7DE'
-        video_url_2 = 'https://www.youtube.com/watch?v=43yoYayn1CE'
-        video_url_3 = 'https://www.youtube.com/watch?v=Lv3gv-IXBq0'
-        video_urls = (video_url_1, video_url_2, video_url_3)
+        playlist_url = request.POST.get('playlist_url')
+        video_urls = YouTubePlaylist(playlist_url)
+        errors_list = []
         video_transcriptions = []
         videos_id = []
+        playlist_id = 0
         for video_url in video_urls:
-            transcript_obj = YouTubeTranscriber(video_url)
+            transcript_obj = YouTubeTranscriber(video_url, playlist_id)
+            if transcript_obj.errors_list:
+                errors_list.append(
+                    f'Для №{playlist_id} из плейлиста возникли ошибки: {"; ".join(transcript_obj.errors_list)}'
+                )
             transcriptions = transcript_obj.get_transcriptions()
-            video_id = transcript_obj.get_video_id()
+            video_id = (transcript_obj.get_video_id(), playlist_id)
             video_transcriptions.append(transcriptions)
             videos_id.append(video_id)
-        return render(request, 'channel.html', {
-            'videos': video_transcriptions,
-            'videos_id': videos_id,
+            playlist_id += 1
+        return render(request, 'playlist.html', {
+            'videos': {
+                'transcriptions': video_transcriptions,
+                'videos_id': videos_id,
+            },
+            'video_count': f'{len(videos_id) - len(errors_list)}/{len(videos_id)}',
+            'errors': errors_list,
         })

@@ -241,3 +241,11 @@ p {
 strong{
     color: #e3ffab;
 }
+.player{
+    display: block;
+}
+.timecode-button{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

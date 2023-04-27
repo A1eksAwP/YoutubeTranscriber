@@ -1,19 +1,23 @@
 {% extends 'main.html' %}
 
+{% block title %}
+    Одиночное видео
+{% endblock %}
+
 {% block content %}
 
     <div class="video-box">
         <form method="post" action="{% url 'video' %}">
             {% csrf_token %}
             <div class="new-inputbox inputbox">
-                <ion-icon name="videocam-outline"></ion-icon>
+                <ion-icon name="logo-youtube"></ion-icon>
                 <input type="text" name="video_url">
                 <label for="video_url">Новое url:</label>
             </div>
         </form>
-{#        <h2>{{ video_title }}</h2>#}
+        <h2>{{ video_title }}</h2>
         <div id="{{ video_id }}"></div>
-{#        <p>{{ channel_title }}</p>#}
+        <p>{{ channel_title }} {{ channel_url }}</p>
     </div>
     <div class="form-box">
         <form method="POST" action="">

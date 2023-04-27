@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}{% endblock %}</title>
+    <title>{% block title %}Главная{% endblock %}</title>
     {% block link %}
         <link rel="stylesheet" type="text/css" href="{% static 'transcribe_app/style.css' %}">
         <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
@@ -25,23 +25,25 @@
                 <form method="post" action="{% url 'video' %}">
                     {% csrf_token %}
                     <div class="inputbox">
-                        <ion-icon name="videocam-outline"></ion-icon>
+                        <ion-icon name="logo-youtube"></ion-icon>
                         <input type="text" name="video_url">
-                        <label for="video_url">Введите url видео с YouTube:</label>
+                        <label for="video_url">Введите url единичного видео с YouTube:</label>
                     </div>
                 </form>
                 <form method="post" action="{% url 'channel' %}">
                     {% csrf_token %}
                     <div class="inputbox">
-                        <ion-icon name="logo-youtube"></ion-icon>
-                        <input type="text" name="channel_url">
-                        <label for="channel_url">Введите url канала с YouTube:</label>
+                        <ion-icon name="list-outline"></ion-icon>
+                        <input type="text" name="playlist_url">
+                        <label for="playlist_url">Введите url плейлиста с YouTube:</label>
                     </div>
                 </form>
             </div>
         {% if errors %}
             <div class="errors">
-                    <p>{{ errors }}</p>
+                {% for error in errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
             </div>
         {% endif %}
         </div>
@@ -49,6 +51,7 @@
     {% endblock %}
     </section>
 </main>
+
 {% block script %}
 {% endblock %}
 

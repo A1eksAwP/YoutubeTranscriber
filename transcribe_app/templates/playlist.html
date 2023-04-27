@@ -1,0 +1,95 @@
+{% extends 'main.html' %}
+
+{% block title %}
+    Плейлист
+{% endblock %}
+
+{% block content %}
+    <div class="video-box">
+        <form method="post" action="{% url 'channel' %}">
+            {% csrf_token %}
+            <div class="new-inputbox inputbox">
+                <ion-icon name="list-outline"></ion-icon>
+                <input type="text" name="playlist_url">
+                <label for="playlist_url">Другой плейлист с YouTube:</label>
+            </div>
+        </form>
+        {% for video_id in videos.videos_id %}
+        <div class=player id="player-{{ video_id.0 }}"></div>
+        {% endfor %}
+        {% if errors %}
+            <div>
+                {% for error in errors %}
+                <p><strong>{{ error }}</strong></p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="form-box">
+            <div class="inputbox">
+                <ion-icon name="search-outline"></ion-icon>
+                <input type="text" name="words_filter" id="filter" title="Введите часть слова">
+                <label for="words_filter">Фильтр слов среди {{ video_count }} видео:</label>
+            </div>
+            <div class="timecodes">
+                {% for transcription in videos.transcriptions %}
+                    {% for timecode, tuple in transcription.items %}
+                        <div>
+                            <button class="timecode-button" type="button" onclick="playTimeCodeButton({{ tuple.3 }}, {{ tuple.1 }})">
+                                <strong>{{ timecode }}</strong> {{ tuple.0 }} <strong>{{ tuple.3 }}</strong>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script>
+      const tag = document.createElement('script');
+
+      const allPlayers = []
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      function onYouTubeIframeAPIReady() {
+          {% for video_id in videos.videos_id %}
+        player{{ video_id.1 }} = new YT.Player('player-{{ video_id.0 }}', {
+          height: '720',
+          width: '1280',
+          videoId: '{{ video_id.0 }}',
+        });
+        allPlayers.push(player{{ video_id.1 }})
+          {% endfor %}
+      }
+
+
+      function playTimeCodeButton(id, time) {
+        let allClassPlayers = document.querySelectorAll('.player')
+
+        allPlayers.forEach(player => player.pauseVideo());
+        allClassPlayers.forEach(player => player.style.display = 'none');
+        allClassPlayers[id].style.display = 'block';
+        allPlayers[id].seekTo(time);
+        allPlayers[id].playVideo();
+      }
+
+      const filterInput = document.querySelector('#filter');
+        const buttons = document.querySelectorAll('.timecode-button');
+
+        filterInput.addEventListener('input', () => {
+          const query = filterInput.value.toLowerCase().trim();
+          buttons.forEach((button) => {
+            const buttonText = button.textContent.toLowerCase();
+            if (buttonText.includes(query)) {
+              button.style.display = 'flex';
+            } else {
+              button.style.display = 'none';
+            }
+          });
+        });
+    </script>
+{% endblock %}
