@@ -55,22 +55,21 @@
           height: '720',
           width: '1280',
           videoId: '{{ video_id }}',
-          events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange,
-          }
         });
       }
 
-      function onPlayerReady(event) {
-        event.target.loadVideo();
-      }
+      const nowPlayer = document.querySelector("body");
 
-      function onPlayerStateChange(event) {
-           if (event.data === YT.PlayerState.STOP){
-             player.stopVideo()
-           }
+      nowPlayer.addEventListener('keydown', (event) => {
+       if (event.code === 'Space') {
+        event.preventDefault();
+        if (player.getPlayerState() === 2) {
+          player.playVideo();
+        } else {
+          player.pauseVideo();
+        }
       }
+      });
 
       const filterInput = document.querySelector('#filter');
         const buttons = document.querySelectorAll('.timecode-button');
