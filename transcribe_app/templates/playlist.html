@@ -15,7 +15,7 @@
             </div>
         </form>
         {% for video_id in videos.videos_id %}
-        <div class=player id="player-{{ video_id.0 }}"></div>
+        <div class="player" id="player-{{ video_id.0 }}"></div>
         {% endfor %}
         {% if errors %}
             <div>
@@ -48,7 +48,7 @@
 {% block script %}
     <script>
       const tag = document.createElement('script');
-
+      let nowId = 0
       const allPlayers = []
 
       tag.src = "https://www.youtube.com/iframe_api";
@@ -69,13 +69,26 @@
 
       function playTimeCodeButton(id, time) {
         let allClassPlayers = document.querySelectorAll('.player')
-
+        nowId = id
         allPlayers.forEach(player => player.pauseVideo());
-        allClassPlayers.forEach(player => player.style.display = 'none');
-        allClassPlayers[id].style.display = 'block';
-        allPlayers[id].seekTo(time);
-        allPlayers[id].playVideo();
+        allClassPlayers.forEach(player => player.classList.remove("now-player"));
+        allClassPlayers[nowId].classList.add("now-player")
+        allPlayers[nowId].seekTo(time);
+        allPlayers[nowId].playVideo();
       }
+
+      const nowPlayer = document.querySelector("body");
+
+      nowPlayer.addEventListener('keydown', (event) => {
+       if (event.code === 'Space') {
+        event.preventDefault();
+        if (allPlayers[nowId].getPlayerState() === 2) {
+          allPlayers[nowId].playVideo();
+        } else {
+          allPlayers[nowId].pauseVideo();
+        }
+      }
+      });
 
       const filterInput = document.querySelector('#filter');
         const buttons = document.querySelectorAll('.timecode-button');

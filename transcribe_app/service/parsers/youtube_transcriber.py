@@ -4,7 +4,7 @@ import re
 import ast
 from transcribe_app.service.exceptions import errors as exception
 from transcribe_app.service.exceptions import ERROR_MESSAGE
-import pytube
+
 
 class YouTubeTranscriber:
     """
@@ -127,6 +127,9 @@ class YouTubeTranscriber:
         agent_params = {
             "context": {
                 "client": {
+                    "h1": "ru",
+                    "gl": "RU",
+                    "timeZone": "Europe/Moscow",
                     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
                         AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
                     "clientName": "WEB",

@@ -242,6 +242,9 @@ strong{
     color: #e3ffab;
 }
 .player{
+    display: none;
+}
+.now-player{
     display: block;
 }
 .timecode-button{
