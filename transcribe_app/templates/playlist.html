@@ -14,9 +14,7 @@
                 <label for="playlist_url">Другой плейлист с YouTube:</label>
             </div>
         </form>
-        {% for video_id in videos.videos_id %}
-        <div class="player" id="player-{{ video_id.0 }}"></div>
-        {% endfor %}
+        <div class="now-player" id="player"></div>
         {% if errors %}
             <div>
                 {% for error in errors %}
@@ -34,10 +32,16 @@
             <div class="timecodes">
                 {% for transcription in videos.transcriptions %}
                     {% for timecode, tuple in transcription.items %}
-                        <div>
-                            <button class="timecode-button" type="button" onclick="playTimeCodeButton({{ tuple.3 }}, {{ tuple.1 }})">
+                        <div class="timecode-container">
+                            <div class="timecode-button">
+                            <button class="timecode-button" type="button" onclick="setVideoTime('{{ tuple.2 }}', {{ tuple.1 }})">
                                 <strong>{{ timecode }}</strong> {{ tuple.0 }} <strong>{{ tuple.3 }}</strong>
                             </button>
+                            </div>
+                        <label class="switch">
+                          <input type="checkbox">
+                          <span class="slider round"></span>
+                        </label>
                         </div>
                     {% endfor %}
                 {% endfor %}
@@ -48,50 +52,58 @@
 {% block script %}
     <script>
       const tag = document.createElement('script');
-      let nowId = 0
-      const allPlayers = []
+      let nowId = '{{ videos.videos_id.0.0 }}'
+      let lastTxtId
 
       tag.src = "https://www.youtube.com/iframe_api";
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+      let playerJS;
+
       function onYouTubeIframeAPIReady() {
-          {% for video_id in videos.videos_id %}
-        player{{ video_id.1 }} = new YT.Player('player-{{ video_id.0 }}', {
+        playerJS = new YT.Player('player', {
           height: '720',
           width: '1280',
-          videoId: '{{ video_id.0 }}',
+          videoId: nowId,
         });
-        allPlayers.push(player{{ video_id.1 }})
-          {% endfor %}
       }
 
-
-      function playTimeCodeButton(id, time) {
-        let allClassPlayers = document.querySelectorAll('.player')
+      function setVideoTime(id, time) {
+        let ClassPlayer = document.querySelectorAll('.now-player')
         nowId = id
-        allPlayers.forEach(player => player.pauseVideo());
-        allClassPlayers.forEach(player => player.classList.remove("now-player"));
-        allClassPlayers[nowId].classList.add("now-player")
-        allPlayers[nowId].seekTo(time);
-        allPlayers[nowId].playVideo();
+        txtId = 'https://www.youtube.com/embed/'+nowId+'?enablejsapi=1&origin=http%3A%2F%2Flocalhost%3A8000&widgetid=1'
+        if (lastTxtId !== txtId) {
+            ClassPlayer[0].setAttribute('src', txtId);
+            ClassPlayer[0].classList.add("now-player")
+            setTimeout(() => {seekToTime(time)}, 600)
+            lastTxtId = txtId
+        }
+        else {
+            seekToTime(time)
+        }
+      }
+
+      function seekToTime(time) {
+        playerJS.seekTo(time);
+        playerJS.playVideo();
       }
 
       const nowPlayer = document.querySelector("body");
 
       nowPlayer.addEventListener('keydown', (event) => {
-       if (event.code === 'Space') {
+       if (event.code === 'Space' && filterInput !== document.activeElement) {
         event.preventDefault();
-        if (allPlayers[nowId].getPlayerState() === 2) {
-          allPlayers[nowId].playVideo();
+        if (playerJS.getPlayerState() === 2) {
+          playerJS.playVideo();
         } else {
-          allPlayers[nowId].pauseVideo();
+          playerJS.pauseVideo();
         }
       }
       });
 
       const filterInput = document.querySelector('#filter');
-        const buttons = document.querySelectorAll('.timecode-button');
+        const buttons = document.querySelectorAll('.timecode-container');
 
         filterInput.addEventListener('input', () => {
           const query = filterInput.value.toLowerCase().trim();

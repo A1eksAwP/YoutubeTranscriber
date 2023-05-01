@@ -16,7 +16,7 @@
             </div>
         </form>
         <h2>{{ video_title }}</h2>
-        <div id="{{ video_id }}"></div>
+        <div id="player"></div>
         <p>{{ channel_title }} {{ channel_url }}</p>
     </div>
     <div class="form-box">
@@ -30,10 +30,16 @@
         </form>
         <div class="timecodes">
         {% for timecode, tuple in transcriptions.items %}
-            <div>
-                <button class="timecode-button" type="button" onclick="player.seekTo({{ tuple.1 }})">
-                    <strong>{{ timecode }}</strong> {{ tuple.0 }}
+            <div class="timecode-container">
+                <div class="timecode-button">
+                    <button  type="button" onclick="playerJS.seekTo({{ tuple.1 }})">
+                    <strong>{{ timecode }}</strong> {{ tuple.0 }} <strong>&nbsp</strong>
                 </button>
+                </div>
+            <label class="switch">
+              <input type="checkbox">
+              <span class="slider round"></span>
+            </label>
             </div>
         {% endfor %}
         </div>
@@ -48,10 +54,10 @@
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-      let player;
+      let playerJS;
 
       function onYouTubeIframeAPIReady() {
-        player = new YT.Player('{{ video_id }}', {
+        playerJS = new YT.Player('player', {
           height: '720',
           width: '1280',
           videoId: '{{ video_id }}',
@@ -61,18 +67,18 @@
       const nowPlayer = document.querySelector("body");
 
       nowPlayer.addEventListener('keydown', (event) => {
-       if (event.code === 'Space') {
+       if (event.code === 'Space' && filterInput !== document.activeElement) {
         event.preventDefault();
-        if (player.getPlayerState() === 2) {
-          player.playVideo();
+        if (playerJS.getPlayerState() === 2) {
+          playerJS.playVideo();
         } else {
-          player.pauseVideo();
+          playerJS.pauseVideo();
         }
       }
       });
 
       const filterInput = document.querySelector('#filter');
-        const buttons = document.querySelectorAll('.timecode-button');
+        const buttons = document.querySelectorAll('.timecode-container');
 
         filterInput.addEventListener('input', () => {
           const query = filterInput.value.toLowerCase().trim();

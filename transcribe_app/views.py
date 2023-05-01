@@ -1,7 +1,10 @@
+import re
+
 from django.core.handlers.wsgi import WSGIRequest
 from django.shortcuts import render
 from transcribe_app.service.parsers.youtube_transcriber import YouTubeTranscriber
 from pytube import Playlist as YouTubePlaylist
+from transcribe_app.service.exceptions import ERROR_MESSAGE
 
 
 def main(request: WSGIRequest):
@@ -33,6 +36,10 @@ def single_video(request: WSGIRequest):
 def channel(request: WSGIRequest):
     if request.method == 'POST':
         playlist_url = request.POST.get('playlist_url')
+        if not re.fullmatch(r'(https://)?(www\.)?youtube\.com/playlist\?list=\S*', playlist_url):
+            return render(request, 'main.html', {
+                'errors': [ERROR_MESSAGE.BAD_URL],
+            })
         video_urls = YouTubePlaylist(playlist_url)
         errors_list = []
         video_transcriptions = []

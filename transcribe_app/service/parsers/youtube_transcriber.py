@@ -42,7 +42,7 @@ class YouTubeTranscriber:
 
     @staticmethod
     def validate_url(url: str) -> str:
-        if not re.fullmatch(r'(https://)?www\.youtube\.com/watch\?v=[^&]+.*', url):
+        if not re.fullmatch(r'(https://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)\S*', url):
             raise exception.BadUrlError(url)
         return url
 
