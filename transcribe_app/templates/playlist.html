@@ -1,4 +1,4 @@
-{% extends 'main.html' %}
+{% extends 'transcribe.html' %}
 
 {% block title %}
     Плейлист
@@ -6,54 +6,63 @@
 
 {% block content %}
     <div class="video-box">
-        <form method="post" action="{% url 'channel' %}">
+        <form method="post" action="{% url 'playlist' %}">
             {% csrf_token %}
             <div class="new-inputbox inputbox">
                 <ion-icon name="list-outline"></ion-icon>
-                <input type="text" name="playlist_url">
+                <input type="text" name="playlist_url" required>
                 <label for="playlist_url">Другой плейлист с YouTube:</label>
             </div>
         </form>
         <div class="now-player" id="player"></div>
         {% if errors %}
-            <div>
-                {% for error in errors %}
-                <p><strong>{{ error }}</strong></p>
+            <div id="errors">
+                {% for playlist_id, error_obj in errors.items %}
+                    <button class="very_long" onclick="
+                            setVideoTime('{{ error_obj.video_id }}', 0)">
+                        <strong>ОШИБКА</strong>
+                        .../watch?v={{ error_obj.video_id }} - {{ error_obj.description }}
+                        <strong>{{ playlist_id }}</strong>
+                    </button>
                 {% endfor %}
             </div>
         {% endif %}
     </div>
     <div class="form-box">
-            <div class="inputbox">
-                <ion-icon name="search-outline"></ion-icon>
-                <input type="text" name="words_filter" id="filter" title="Введите часть слова">
-                <label for="words_filter">Фильтр слов среди {{ video_count }} видео:</label>
-            </div>
-            <div class="timecodes">
-                {% for transcription in videos.transcriptions %}
-                    {% for timecode, tuple in transcription.items %}
-                        <div class="timecode-container">
-                            <div class="timecode-button">
-                            <button class="timecode-button" type="button" onclick="setVideoTime('{{ tuple.2 }}', {{ tuple.1 }})">
-                                <strong>{{ timecode }}</strong> {{ tuple.0 }} <strong>{{ tuple.3 }}</strong>
+        <div class="inputbox">
+            <ion-icon name="search-outline"></ion-icon>
+            <input type="text" name="words_filter" id="filter" title="Введите часть слова" required>
+            <label for="words_filter">Фильтр слов среди {{ id_ok_count }} видео:</label>
+        </div>
+        <div class="timecodes">
+            {% for transcription in videos.transcriptions %}
+                {% for timecode, obj in transcription.items %}
+                    <div class="timecode-container">
+                        <div class="timecode-button">
+                            <button class="timecode-button" type="button" onclick="
+                                    setVideoTime('{{ obj.video_id }}', {{ obj.seconds }})">
+                                <strong>{{ timecode }}</strong>
+                                {{ obj.phrase }}
+                                <strong>{{ forloop.parentloop.counter }}</strong>
                             </button>
-                            </div>
-                        <label class="switch">
-                          <input type="checkbox">
-                          <span class="slider round"></span>
-                        </label>
                         </div>
-                    {% endfor %}
+                    <label class="switch">
+                      <input type="checkbox">
+                      <span class="slider round"></span>
+                    </label>
+                    </div>
                 {% endfor %}
-            </div>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}
 
 {% block script %}
     <script>
       const tag = document.createElement('script');
-      let nowId = '{{ videos.videos_id.0.0 }}'
+      let nowId = '{{ videos.videos_id.0 }}'
       let lastTxtId
+      let txtId
 
       tag.src = "https://www.youtube.com/iframe_api";
       const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -72,7 +81,7 @@
       function setVideoTime(id, time) {
         let ClassPlayer = document.querySelectorAll('.now-player')
         nowId = id
-        txtId = 'https://www.youtube.com/embed/'+nowId+'?enablejsapi=1&origin=http%3A%2F%2Flocalhost%3A8000&widgetid=1'
+        txtId = 'https://www.youtube.com/embed/'+nowId+'?enablejsapi=1'
         if (lastTxtId !== txtId) {
             ClassPlayer[0].setAttribute('src', txtId);
             ClassPlayer[0].classList.add("now-player")

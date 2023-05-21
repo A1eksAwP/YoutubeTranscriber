@@ -53,7 +53,7 @@ class YouTubeTranscriber:
         try:
             self.start_parser()
         except exception.BadUrlError:
-            self.errors_list.append(ERROR_MESSAGE.BAD_URL)
+            self.errors_list.append(ERROR_MESSAGE.BAD_VIDEO_URL)
         except exception.BadRequest:
             self.errors_list.append(ERROR_MESSAGE.BAD_REQUEST)
         except exception.MissingApiKeyError:
@@ -161,7 +161,10 @@ class YouTubeTranscriber:
         for cue_group in self.transcript_json:
             time_code, phrase = self._parse_cue_group(cue_group)
             time_seconds = self.time_to_sec(time_code)
-            self.transcript_dict[time_code] = (phrase, time_seconds, self.video_id, self.playlist_id)
+            self.transcript_dict[time_code] = {'phrase': phrase,
+                                               'seconds': time_seconds,
+                                               'video_id': self.video_id,
+                                               'playlist_id': self.playlist_id}
 
     def get_transcriptions(self) -> dict[str]:
         return self.transcript_dict

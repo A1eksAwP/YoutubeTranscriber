@@ -15,10 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path, include
-from transcribe_app.views import main, single_video, channel
+from transcribe_app.views import main, single_video, playlist
 
 urlpatterns = [
-    path('', main, name='main'),
+    path('', main, name='transcribe'),
     path('video/', single_video, name='video'),
-    path('channel/', channel, name='channel'),
+    path('playlist/', playlist, name='playlist'),
 ]

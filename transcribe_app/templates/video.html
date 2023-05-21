@@ -1,4 +1,4 @@
-{% extends 'main.html' %}
+{% extends 'transcribe.html' %}
 
 {% block title %}
     Одиночное видео
@@ -11,7 +11,7 @@
             {% csrf_token %}
             <div class="new-inputbox inputbox">
                 <ion-icon name="logo-youtube"></ion-icon>
-                <input type="text" name="video_url">
+                <input type="text" name="video_url" required>
                 <label for="video_url">Новое url:</label>
             </div>
         </form>
@@ -20,25 +20,20 @@
         <p>{{ channel_title }} {{ channel_url }}</p>
     </div>
     <div class="form-box">
-        <form method="POST" action="">
-        {% csrf_token %}
             <div class="inputbox">
                 <ion-icon name="search-outline"></ion-icon>
-                <input type="text" name="words_filter" id="filter" title="Введите часть слова">
+                <input type="text" name="words_filter" id="filter" title="Введите часть слова" required>
                 <label for="words_filter">Фильтр слов:</label>
             </div>
-        </form>
         <div class="timecodes">
-        {% for timecode, tuple in transcriptions.items %}
+        {% for timecode, obj in transcriptions.items %}
             <div class="timecode-container">
                 <div class="timecode-button">
-                    <button  type="button" onclick="playerJS.seekTo({{ tuple.1 }})">
-                    <strong>{{ timecode }}</strong> {{ tuple.0 }} <strong>&nbsp</strong>
-                </button>
+                    <button type="button" onclick="playerJS.seekTo({{ obj.seconds }})"><strong>{{ timecode }}</strong><div lang="ru" class="timecode-phrase">{{ obj.phrase }}</div><strong>&nbsp</strong></button>
                 </div>
             <label class="switch">
-              <input type="checkbox">
-              <span class="slider round"></span>
+                <input type="checkbox">
+                <span class="slider round"></span>
             </label>
             </div>
         {% endfor %}
@@ -47,50 +42,202 @@
 {% endblock %}
 
 {% block script %}
-    <script>
-      const tag = document.createElement('script');
+    <script type="text/javascript" charset="utf-8">
+    const tag = document.createElement('script');
 
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-      let playerJS;
+    let playerJS;
 
-      function onYouTubeIframeAPIReady() {
-        playerJS = new YT.Player('player', {
-          height: '720',
-          width: '1280',
-          videoId: '{{ video_id }}',
-        });
-      }
+    function onYouTubeIframeAPIReady() {
+    playerJS = new YT.Player('player', {
+      height: '720',
+      width: '1280',
+      videoId: '{{ video_id }}',
+    });
+    }
 
-      const nowPlayer = document.querySelector("body");
+    const nowPlayer = document.querySelector("body");
 
-      nowPlayer.addEventListener('keydown', (event) => {
-       if (event.code === 'Space' && filterInput !== document.activeElement) {
-        event.preventDefault();
-        if (playerJS.getPlayerState() === 2) {
-          playerJS.playVideo();
+    nowPlayer.addEventListener('keydown', (event) => {
+    if (event.code === 'Space' && filterInput !== document.activeElement) {
+    event.preventDefault();
+    if (playerJS.getPlayerState() === 2) {
+      playerJS.playVideo();
+    } else {
+      playerJS.pauseVideo();
+    }
+    }
+    });
+
+    const filterInput = document.querySelector('#filter');
+    const buttons = document.querySelectorAll('.timecode-container');
+
+    filterInput.addEventListener('input', () => {
+      const query = filterInput.value.toLowerCase().trim();
+      buttons.forEach((button) => {
+        const buttonText = button.textContent.toLowerCase();
+        if (buttonText.includes(query)) {
+          button.style.display = 'flex';
         } else {
-          playerJS.pauseVideo();
+          button.style.display = 'none';
         }
-      }
       });
+    });
 
-      const filterInput = document.querySelector('#filter');
-        const buttons = document.querySelectorAll('.timecode-container');
+    function Hilitor(id, tag)
+    {
 
-        filterInput.addEventListener('input', () => {
-          const query = filterInput.value.toLowerCase().trim();
-          buttons.forEach((button) => {
-            const buttonText = button.textContent.toLowerCase();
-            if (buttonText.includes(query)) {
-              button.style.display = 'flex';
-            } else {
-              button.style.display = 'none';
+      // Original JavaScript code by Chirp Internet: www.chirpinternet.eu
+      // Please acknowledge use of this code by including this header.
+
+      // private variables
+      let targetNode = document.getElementById(id) || document.body;
+      let hiliteTag = tag || "MARK";
+      let skipTags = new RegExp("^(?:" + hiliteTag + "|SCRIPT|FORM)$", "i");
+      let colors = ["#ff6", "#a0ffff", "#9f9", "#f99", "#f6f"];
+      let wordColor = [];
+      let colorIdx = 0;
+      let matchRegExp = "";
+      let openLeft = false;
+      let openRight = false;
+
+      // characters to strip from start and end of the input string
+      let endRegExp = new RegExp('^[^\\w]+|[^\\w]+$', "g");
+
+      // characters used to break up the input string into words
+      let breakRegExp = new RegExp('[^\\w\'-]+', "g");
+
+      this.setEndRegExp = function(regex) {
+        endRegExp = regex;
+        return endRegExp;
+      };
+
+      this.setBreakRegExp = function(regex) {
+        breakRegExp = regex;
+        return breakRegExp;
+      };
+
+      this.setMatchType = function(type)
+      {
+        switch(type)
+        {
+          case "left":
+            this.openLeft = false;
+            this.openRight = true;
+            break;
+
+          case "right":
+            this.openLeft = true;
+            this.openRight = false;
+            break;
+
+          case "open":
+            this.openLeft = this.openRight = true;
+            break;
+
+          default:
+            this.openLeft = this.openRight = false;
+
+        }
+      };
+
+      this.setRegex = function(input)
+      {
+        input = input.replace(endRegExp, "");
+        input = input.replace(breakRegExp, "|");
+        input = input.replace(/^\||\|$/g, "");
+        if(input) {
+          let re = "(" + input + ")";
+          if(!this.openLeft) {
+            re = "\\b" + re;
+          }
+          if(!this.openRight) {
+            re = re + "\\b";
+          }
+          matchRegExp = new RegExp(re, "iu");
+          return matchRegExp;
+        }
+        return false;
+      };
+
+      this.getRegex = function()
+      {
+        let retval = matchRegExp.toString();
+        retval = retval.replace(/(^\/(\\b)?|\(|\)|(\\b)?\/i$)/g, "");
+        retval = retval.replace(/\|/g, " ");
+        return retval;
+      };
+
+      // recursively apply word highlighting
+      this.hiliteWords = function(node)
+      {
+        if(node === undefined || !node) return;
+        if(!matchRegExp) return;
+        if(skipTags.test(node.nodeName)) return;
+
+        if(node.hasChildNodes()) {
+          for(let i=0; i < node.childNodes.length; i++)
+            this.hiliteWords(node.childNodes[i]);
+        }
+        if(node.nodeType === 3) { // NODE_TEXT
+
+          let nv, regs;
+
+          if((nv = node.nodeValue) && (regs = matchRegExp.exec(nv))) {
+
+            if(!wordColor[regs[0].toLowerCase()]) {
+              wordColor[regs[0].toLowerCase()] = colors[colorIdx++ % colors.length];
             }
-          });
-        });
+
+            let match = document.createElement(hiliteTag);
+            match.appendChild(document.createTextNode(regs[0]));
+            match.style.backgroundColor = wordColor[regs[0].toLowerCase()];
+            match.style.color = "#000";
+
+            let after = node.splitText(regs.index);
+            after.nodeValue = after.nodeValue.substring(regs[0].length);
+            node.parentNode.insertBefore(match, after);
+
+          }
+        }
+      };
+
+      // remove highlighting
+      this.remove = function()
+      {
+        let arr = document.getElementsByTagName(hiliteTag), el;
+        while(arr.length && (el = arr[0])) {
+          let parent = el.parentNode;
+          parent.replaceChild(el.firstChild, el);
+          parent.normalize();
+        }
+      };
+
+      // start highlighting at target node
+      this.apply = function(input)
+      {
+        this.remove();
+        if(input === undefined || !(input = input.replace(/(^\s+|\s+$)/g, ""))) {
+          return;
+        }
+        if(this.setRegex(input)) {
+          this.hiliteWords(targetNode);
+        }
+        return matchRegExp;
+      };
+
+    }
+
+    window.addEventListener("DOMContentLoaded", function(e) {
+        let myHilitor2 = new Hilitor("playground");
+        myHilitor2.setMatchType("left");
+        document.getElementById("filter").addEventListener("keyup", function(e) {
+          myHilitor2.apply(this.value);
+        }, false);
+        }, false);
     </script>
 
 {% endblock %}
