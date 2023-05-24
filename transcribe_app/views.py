@@ -1,7 +1,11 @@
+import json
 import re
 
 from django.core.handlers.wsgi import WSGIRequest
-from django.shortcuts import render
+from django.http import HttpResponseNotModified
+from django.shortcuts import render, redirect
+
+from transcribe_app.models import TranscribeVideoDB
 from transcribe_app.service.parsers.youtube_transcriber import YouTubeTranscriber
 from pytube import Playlist as YouTubePlaylist
 from transcribe_app.service.exceptions import ERROR_MESSAGE
@@ -58,3 +62,23 @@ def playlist(request: WSGIRequest):
             'id_ok_count': f'{len(videos_id) - len(errors_dict)}/{len(videos_id)}',
             'errors': errors_dict,
         })
+
+
+def save_data_base(request: WSGIRequest):
+    if request.method == 'POST':
+        apply_objects = [key for key in request.POST.keys() if key != 'csrfmiddlewaretoken']
+        apply_dict = dict()
+        for obj in apply_objects:
+            video_id, timecode = obj.split('?')
+            if apply_dict.get(video_id):
+                apply_dict[video_id] += [timecode]
+            else:
+                apply_dict[video_id] = [timecode]
+        for video_id in apply_dict:
+            db_transcribe: TranscribeVideoDB = TranscribeVideoDB.objects.filter(video_id=video_id).first()
+            transcript_dict = json.loads(db_transcribe.transcribe_data)
+            for timecode in apply_dict[video_id]:
+                transcript_dict[timecode]['is_used'] = True
+            db_transcribe.transcribe_data = json.dumps(transcript_dict)
+            db_transcribe.save()
+    return HttpResponseNotModified()

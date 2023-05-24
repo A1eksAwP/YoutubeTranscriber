@@ -20,24 +20,28 @@
         <p>{{ channel_title }} {{ channel_url }}</p>
     </div>
     <div class="form-box">
-            <div class="inputbox">
-                <ion-icon name="search-outline"></ion-icon>
-                <input type="text" name="words_filter" id="filter" title="Введите часть слова" required>
-                <label for="words_filter">Фильтр слов:</label>
-            </div>
-        <div class="timecodes">
-        {% for timecode, obj in transcriptions.items %}
-            <div class="timecode-container">
-                <div class="timecode-button">
-                    <button type="button" onclick="playerJS.seekTo({{ obj.seconds }})"><strong>{{ timecode }}</strong><div lang="ru" class="timecode-phrase">{{ obj.phrase }}</div><strong>&nbsp</strong></button>
-                </div>
-            <label class="switch">
-                <input type="checkbox">
-                <span class="slider round"></span>
-            </label>
-            </div>
-        {% endfor %}
+        <div class="inputbox">
+            <ion-icon name="search-outline"></ion-icon>
+            <input type="text" name="words_filter" id="filter" title="Введите часть слова" required>
+            <label for="words_filter">Фильтр слов:</label>
         </div>
+        <div class="timecodes">
+            <form method="post" action="{% url 'save_db' %}">
+            {% csrf_token %}
+            {% for timecode, obj in transcriptions.items %}
+                <div class="timecode-container">
+                    <div class="timecode-button">
+                        <button type="button" onclick="playerJS.seekTo({{ obj.seconds }})"><strong>{{ timecode }}</strong><div lang="ru" class="timecode-phrase">{{ obj.phrase }}</div><strong>&nbsp</strong></button>
+                    </div>
+                    <label class="switch">
+                        <input name="{{ obj.video_id }}?{{ timecode }}" {% if obj.is_used %} checked {% endif %} type="checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit"><strong>&nbsp</strong> Сохранить <strong>&nbsp</strong></button>
+        </form>
     </div>
 {% endblock %}
 

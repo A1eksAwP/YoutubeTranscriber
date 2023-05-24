@@ -35,6 +35,9 @@
             <label for="words_filter">Фильтр слов среди {{ id_ok_count }} видео:</label>
         </div>
         <div class="timecodes">
+            <form method="post" action="{% url 'save_db' %}">
+
+            {% csrf_token %}
             {% for transcription in videos.transcriptions %}
                 {% for timecode, obj in transcription.items %}
                     <div class="timecode-container">
@@ -47,13 +50,16 @@
                             </button>
                         </div>
                     <label class="switch">
-                      <input type="checkbox">
+                      <input name="{{ obj.video_id }}?{{ timecode }}" {% if obj.is_used %} checked {% endif %} type="checkbox">
                       <span class="slider round"></span>
                     </label>
                     </div>
                 {% endfor %}
             {% endfor %}
+
         </div>
+    <button type="submit"><strong>&nbsp</strong> Сохранить <strong>&nbsp</strong></button>
+    </form>
     </div>
 {% endblock %}
 

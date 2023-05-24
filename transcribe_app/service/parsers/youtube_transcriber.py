@@ -4,6 +4,7 @@ import re
 import ast
 from transcribe_app.service.exceptions import errors as exception
 from transcribe_app.service.exceptions import ERROR_MESSAGE
+from transcribe_app.models import TranscribeVideoDB
 
 
 class YouTubeTranscriber:
@@ -72,16 +73,25 @@ class YouTubeTranscriber:
     def start_parser(self):
         self.url = self.validate_url(self.url)
         self.video_id = self.set_video_id()
-        self.video_url = f'https://www.youtube.com/watch?v={self.video_id}'
-        self._set_html()
-        self._set_params()
-        self._set_api_key()
-        self.transcript_url = f'https://www.youtube.com/youtubei/v1/get_transcript?key={self.api_key}'
-        self._get_transcript_json()
-        self._set_transcript_dict()
-        self._set_video_title()
-        self._set_channel_title()
-        self._set_channel_url()
+        db_transcribe: TranscribeVideoDB = TranscribeVideoDB.objects.filter(video_id=self.video_id).first()
+        if db_transcribe:
+            self.transcript_dict = json.loads(db_transcribe.transcribe_data)
+            self.playlist_id = db_transcribe.playlist_id
+            self.video_title = db_transcribe.video_title
+            self.channel_title = db_transcribe.channel_title
+            self.channel_url = db_transcribe.channel_url
+        else:
+            self.video_url = f'https://www.youtube.com/watch?v={self.video_id}'
+            self._set_html()
+            self._set_params()
+            self._set_api_key()
+            self.transcript_url = f'https://www.youtube.com/youtubei/v1/get_transcript?key={self.api_key}'
+            self._get_transcript_json()
+            self._set_transcript_dict()
+            self._set_video_title()
+            self._set_channel_title()
+            self._set_channel_url()
+            self.__save_db()
 
     def _set_html(self):
         response = requests.get(self.video_url)
@@ -161,10 +171,13 @@ class YouTubeTranscriber:
         for cue_group in self.transcript_json:
             time_code, phrase = self._parse_cue_group(cue_group)
             time_seconds = self.time_to_sec(time_code)
-            self.transcript_dict[time_code] = {'phrase': phrase,
-                                               'seconds': time_seconds,
-                                               'video_id': self.video_id,
-                                               'playlist_id': self.playlist_id}
+            self.transcript_dict[time_code] = {
+                'phrase': phrase,
+                'seconds': time_seconds,
+                'video_id': self.video_id,
+                'is_used': False,
+                'playlist_id': self.playlist_id
+            }
 
     def get_transcriptions(self) -> dict[str]:
         return self.transcript_dict
@@ -178,3 +191,14 @@ class YouTubeTranscriber:
         for duration in time.split(":"):
             sec = sec * 60 + int(duration)
         return sec
+
+    def __save_db(self):
+        db_transcribe = TranscribeVideoDB()
+        db_transcribe.transcribe_data = json.dumps(self.transcript_dict)
+        db_transcribe.video_id = self.video_id
+        db_transcribe.playlist_id = self.playlist_id
+        db_transcribe.video_title = self.video_title
+        db_transcribe.channel_url = self.channel_url
+        db_transcribe.channel_title = self.channel_title
+        db_transcribe.save()
+
