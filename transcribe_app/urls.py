@@ -14,12 +14,14 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
-from transcribe_app.views import main, single_video, playlist, save_data_base
+from django.urls import path
+from transcribe_app.views import main, single_video, playlist, save_db, try_request, load_from_db
 
 urlpatterns = [
     path('', main, name='transcribe'),
     path('video/', single_video, name='video'),
     path('playlist/', playlist, name='playlist'),
-    path('save/', save_data_base, name='save_db'),
+    path('save/', save_db, name='save_db'),
+    path('try/', try_request, name='try_request'),
+    path('load/', load_from_db, name='load_from_db'),
 ]

@@ -6,12 +6,12 @@
 
 {% block content %}
     <div class="video-box">
-        <form method="post" action="{% url 'playlist' %}">
+        <form method="post" action="{% url 'try_request' %}">
             {% csrf_token %}
             <div class="new-inputbox inputbox">
-                <ion-icon name="list-outline"></ion-icon>
-                <input type="text" name="playlist_url" required>
-                <label for="playlist_url">Другой плейлист с YouTube:</label>
+                <ion-icon name="logo-youtube"></ion-icon>
+                <input type="text" name="user_url" required>
+                <label for="user_url">Введите url видео или плейлиста с YouTube:</label>
             </div>
         </form>
         <div class="now-player" id="player"></div>
@@ -34,10 +34,9 @@
             <input type="text" name="words_filter" id="filter" title="Введите часть слова" required>
             <label for="words_filter">Фильтр слов среди {{ id_ok_count }} видео:</label>
         </div>
-        <div class="timecodes">
-            <form method="post" action="{% url 'save_db' %}">
-
+        <form class="save-form v-form" method="post" action="{% url 'save_db' %}">
             {% csrf_token %}
+        <div class="timecodes scroll-menu">
             {% for transcription in videos.transcriptions %}
                 {% for timecode, obj in transcription.items %}
                     <div class="timecode-container">
@@ -53,12 +52,12 @@
                       <input name="{{ obj.video_id }}?{{ timecode }}" {% if obj.is_used %} checked {% endif %} type="checkbox">
                       <span class="slider round"></span>
                     </label>
+                    {% if obj.is_used %}<input type="hidden" name="cash?{{ obj.video_id }}?{{ timecode }}">{% endif %}
                     </div>
                 {% endfor %}
             {% endfor %}
-
         </div>
-    <button type="submit"><strong>&nbsp</strong> Сохранить <strong>&nbsp</strong></button>
+    <button type="submit"><strong>&nbsp</strong>Сохранить изменения<strong>&nbsp</strong></button>
     </form>
     </div>
 {% endblock %}

@@ -7,4 +7,3 @@ urlpatterns = [
     path('', main),
     path('transcribe/', include('transcribe_app.urls')),
 ]
-''

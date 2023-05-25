@@ -224,6 +224,9 @@ p {
 
 .timecodes {
     width: 600px;
+}
+
+.scroll-menu{
     position: sticky;
     top: 0;
     overflow-y: scroll;
@@ -357,4 +360,10 @@ input:checked + .slider:before {
 
 .very_long {
     width: 1280px;
+}
+
+.v-form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }

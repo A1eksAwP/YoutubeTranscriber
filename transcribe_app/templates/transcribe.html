@@ -23,22 +23,30 @@
     {% block content %}
         <div class="form-box">
             <div class="form-value">
-                <form method="POST" action="{% url 'video' %}">
+                <form method="POST" action="{% url 'try_request' %}">
                     {% csrf_token %}
                     <div class="inputbox">
                         <ion-icon name="logo-youtube"></ion-icon>
-                        <input type="text" name="video_url" required>
-                        <label for="video_url">Введите url единичного видео с YouTube:</label>
+                        <input type="text" name="user_url" required>
+                        <label for="video_url">Введите url видео или плейлиста с YouTube:</label>
                     </div>
                 </form>
-                <form method="post" action="{% url 'playlist' %}">
-                    {% csrf_token %}
-                    <div class="inputbox">
-                        <ion-icon name="list-outline"></ion-icon>
-                        <input type="text" name="playlist_url" required>
-                        <label for="playlist_url">Введите url плейлиста с YouTube:</label>
-                    </div>
-                </form>
+                {% if db_transcribes %}
+                <div class="v-form">
+                    <strong>Или выберите одно из базы данных:</strong>
+                        <div class="scroll-menu">
+                            {% for db_transcribe in db_transcribes %}
+                                <form method="POST" action="{% url 'load_from_db' %}">
+                                {% csrf_token %}
+                                <button type="submit">
+                                    {{ db_transcribe.video_title|truncatechars:50 }}
+                                </button>
+                                <input type="hidden" name="video_id" value="{{ db_transcribe.video_id }}">
+                                </form>
+                            {% endfor %}
+                        </div>
+                </div>
+                {% endif %}
             </div>
         {% if errors %}
             <div class="errors">
