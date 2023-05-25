@@ -2,7 +2,7 @@ import json
 import re
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponseNotModified
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from transcribe_app.models import TranscribeVideoDB
 from transcribe_app.service.parsers.youtube_transcriber import YouTubeTranscriber
 from pytube import Playlist as YouTubePlaylist
@@ -21,6 +21,7 @@ def load_from_db(request: WSGIRequest):
     if request.method == 'POST':
         video_id = request.POST.get('video_id')
         return single_video(request, f'https://www.youtube.com/watch?v={video_id}')
+    return redirect(main)
 
 
 def try_request(request: WSGIRequest):
@@ -32,45 +33,50 @@ def try_request(request: WSGIRequest):
             return single_video(request, user_url)
         else:
             return main(request, [ERROR_MESSAGE.BAD_URL])
+    return redirect(main)
 
 
-def single_video(request: WSGIRequest, video_url):
-    transcript_obj = YouTubeTranscriber(video_url)
-    if transcript_obj.errors_list:
-        return main(request, transcript_obj.errors_list)
-    return render(request, 'video.html', {
-        'video_id': transcript_obj.video_id,
-        'transcriptions': transcript_obj.transcript_dict,
-        'video_title': transcript_obj.video_title,
-        'channel_title': transcript_obj.channel_title,
-        'channel_url': transcript_obj.channel_url,
-    })
-
-
-def playlist(request: WSGIRequest, playlist_url):
-    video_urls = YouTubePlaylist(playlist_url)
-    video_transcriptions, videos_id = [], []
-    errors_dict = dict()
-    playlist_id = 1
-    for video_url in video_urls:
-        transcript_obj = YouTubeTranscriber(video_url, playlist_id)
+def single_video(request: WSGIRequest, video_url: str = ''):
+    if request.method == 'POST':
+        transcript_obj = YouTubeTranscriber(video_url)
         if transcript_obj.errors_list:
-            errors_dict[playlist_id] = {
-                'video_id': transcript_obj.get_video_id(),
-                'video_url': transcript_obj.video_url,
-                'description': "; ".join(transcript_obj.errors_list)
-            }
-        video_transcriptions.append(transcript_obj.get_transcriptions())
-        videos_id.append(transcript_obj.get_video_id())
-        playlist_id += 1
-    return render(request, 'playlist.html', {
-        'videos': {
-            'transcriptions': video_transcriptions,
-            'videos_id': videos_id,
-        },
-        'id_ok_count': f'{len(videos_id) - len(errors_dict)}/{len(videos_id)}',
-        'errors': errors_dict,
-    })
+            return main(request, transcript_obj.errors_list)
+        return render(request, 'video.html', {
+            'video_id': transcript_obj.video_id,
+            'transcriptions': transcript_obj.transcript_dict,
+            'video_title': transcript_obj.video_title,
+            'channel_title': transcript_obj.channel_title,
+            'channel_url': transcript_obj.channel_url,
+        })
+    return redirect(main)
+
+
+def playlist(request: WSGIRequest, playlist_url: str = ''):
+    if request.method == 'POST':
+        video_urls = YouTubePlaylist(playlist_url)
+        video_transcriptions, videos_id = [], []
+        errors_dict = dict()
+        playlist_id = 1
+        for video_url in video_urls:
+            transcript_obj = YouTubeTranscriber(video_url, playlist_id)
+            if transcript_obj.errors_list:
+                errors_dict[playlist_id] = {
+                    'video_id': transcript_obj.get_video_id(),
+                    'video_url': transcript_obj.video_url,
+                    'description': "; ".join(transcript_obj.errors_list)
+                }
+            video_transcriptions.append(transcript_obj.get_transcriptions())
+            videos_id.append(transcript_obj.get_video_id())
+            playlist_id += 1
+        return render(request, 'playlist.html', {
+            'videos': {
+                'transcriptions': video_transcriptions,
+                'videos_id': videos_id,
+            },
+            'id_ok_count': f'{len(videos_id) - len(errors_dict)}/{len(videos_id)}',
+            'errors': errors_dict,
+        })
+    return redirect(main)
 
 
 def save_db(request: WSGIRequest):
