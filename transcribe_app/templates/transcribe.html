@@ -14,7 +14,7 @@
 </head>
 <nav>
     <div class="nav-box">
-    <a href="{% url 'transcribe' %}">К котикам</a>
+    <a href="{% url 'transcribe' %}">На главную</a>
     </div>
 </nav>
 <body>
@@ -48,10 +48,10 @@
                 </div>
                 {% endif %}
             </div>
-        {% if errors %}
+        {% if errors_list %}
             <div class="errors">
-                {% for error in errors %}
-                <p>{{ error }}</p>
+                {% for error in errors_list %}
+                <strong>{{ error }}</strong>
                 {% endfor %}
             </div>
         {% endif %}

@@ -9,9 +9,12 @@ from pytube import Playlist as YouTubePlaylist
 from transcribe_app.service.exceptions import ERROR_MESSAGE
 
 
-def main(request: WSGIRequest):
+def main(request: WSGIRequest, errors_list=None):
     all_transcribes: TranscribeVideoDB = TranscribeVideoDB.objects.all()
-    return render(request, 'transcribe.html', {'db_transcribes': all_transcribes})
+    return render(request, 'transcribe.html', {
+        'db_transcribes': all_transcribes,
+        'errors_list': errors_list
+    })
 
 
 def load_from_db(request: WSGIRequest):
@@ -28,17 +31,13 @@ def try_request(request: WSGIRequest):
         elif re.fullmatch(r'(https://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)\S*', user_url):
             return single_video(request, user_url)
         else:
-            return render(request, 'transcribe.html', {
-                'errors': [ERROR_MESSAGE.BAD_URL],
-            })
+            return main(request, [ERROR_MESSAGE.BAD_URL])
 
 
 def single_video(request: WSGIRequest, video_url):
     transcript_obj = YouTubeTranscriber(video_url)
     if transcript_obj.errors_list:
-        return render(request, 'transcribe.html', {
-            'errors': transcript_obj.errors_list,
-        })
+        return main(request, transcript_obj.errors_list)
     return render(request, 'video.html', {
         'video_id': transcript_obj.video_id,
         'transcriptions': transcript_obj.transcript_dict,
